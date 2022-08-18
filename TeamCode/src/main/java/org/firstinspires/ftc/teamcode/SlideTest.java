@@ -51,20 +51,17 @@ public class SlideTest extends OpMode{
         if (gamepad1.left_trigger - gamepad1.right_trigger != 0) {
             motor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
             motor.setPower((gamepad1.left_trigger - gamepad1.right_trigger)*1);
+        } else if (!motor.isBusy()) {
+            motor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            motor.setPower(0);
         }
 
-        if (gamepad1.touchpad_finger_1) {
-            motor.setTargetPosition((int) ((gamepad1.touchpad_finger_1_x + 1) * 1000));
+        if (gamepad1.left_stick_button) {
+            motor.setTargetPosition((int) ((gamepad1.left_stick_x + 1) * 1000));
             motor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        }
-
-        if (gamepad1.dpad_left) {
-            motor.setTargetPosition(2000);
-            motor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        }
-        if (gamepad1.dpad_up) {
-            motor.setTargetPosition(1000);
-            motor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            motor.setPower(1);
+            telemetry.addData("finger",  "%.2f", gamepad1.left_stick_x);
+            telemetry.addData("target", "%d", (int) ((gamepad1.left_stick_x + 1) * 1000));
         }
 
         // Send telemetry message to signify robot running;
