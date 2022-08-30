@@ -50,7 +50,7 @@ public class ShooterTest extends OpMode
     int avgRunningSum = 0;
     int iterations;
     boolean shot = false;
-    int targetPosition = 4;
+    int targetPosition = -55;
 
     OutputStreamWriter shooterWriter;
 
@@ -68,7 +68,7 @@ public class ShooterTest extends OpMode
         motor2 = hardwareMap.get(DcMotor.class, "motor2");
         triggerMotor = hardwareMap.get(DcMotor.class, "triggerMotor");
 
-        triggerMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        triggerMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
         trigger = hardwareMap.get(Servo.class, "trigger");
         trigger.setPosition(0.3);
@@ -162,7 +162,7 @@ public class ShooterTest extends OpMode
             triggerMotor.setTargetPosition(targetPosition);
             triggerMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
-            triggerMotor.setPower(1);
+            triggerMotor.setPower(-1);
 
         }
         if(gamepad1.left_bumper)
@@ -203,6 +203,8 @@ public class ShooterTest extends OpMode
         telemetry.addData("low","%.2f", (float)low);
         telemetry.addData("recovery time","%.2f", (float)time);
         telemetry.addData("total avg", avgRunningSum);
+        telemetry.addData("trigger pos", triggerMotor.getCurrentPosition());
+
 
 
     }
