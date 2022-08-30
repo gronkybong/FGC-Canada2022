@@ -68,6 +68,8 @@ public class ShooterTest extends OpMode
         motor2 = hardwareMap.get(DcMotor.class, "motor2");
         triggerMotor = hardwareMap.get(DcMotor.class, "triggerMotor");
 
+        triggerMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+
         trigger = hardwareMap.get(Servo.class, "trigger");
         trigger.setPosition(0.3);
         telemetry.addLine(trigger.getPosition() + "");
@@ -158,12 +160,15 @@ public class ShooterTest extends OpMode
             startShoot = runtime.milliseconds();
 
             triggerMotor.setTargetPosition(targetPosition);
+            triggerMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
             triggerMotor.setPower(1);
 
         }
         if(gamepad1.left_bumper)
         {
             triggerMotor.setTargetPosition(0);
+            triggerMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             triggerMotor.setPower(-1);
             trigger.setPosition(0.3);
 
