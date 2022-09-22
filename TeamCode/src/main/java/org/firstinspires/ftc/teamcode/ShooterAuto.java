@@ -85,38 +85,38 @@ public class ShooterAuto extends LinearOpMode {
         sleep(2000);
         motor.setPower(power);
         motor2.setPower(-power);
-        sleep(5000);
-        while (triggerMotor.getCurrentPosition() > targetPosition) {
-            triggerMotor.setPower(-1);
-        }
-        triggerMotor.setPower(0);
-        sleep(holdWait);
-        while (triggerMotor.getCurrentPosition() < 0) {
-            triggerMotor.setPower(1);
-        }
-        triggerMotor.setPower(0);
-        sleep(intervalWait);
-
-        while (triggerMotor.getCurrentPosition() > targetPosition) {
-            triggerMotor.setPower(-1);
-        }
-        triggerMotor.setPower(0);
-        sleep(holdWait);
-        while (triggerMotor.getCurrentPosition() < 0) {
-            triggerMotor.setPower(1);
-        }
-        triggerMotor.setPower(0);
-        sleep(intervalWait);
-
-        while (triggerMotor.getCurrentPosition() > targetPosition) {
-            triggerMotor.setPower(-1);
-        }
-        triggerMotor.setPower(0);
-        sleep(holdWait);
-        while (triggerMotor.getCurrentPosition() < 0) {
-            triggerMotor.setPower(1);
-        }
-        triggerMotor.setPower(0);
+        sleep(30000);
+//        while (triggerMotor.getCurrentPosition() > targetPosition) {
+//            triggerMotor.setPower(-1);
+//        }
+//        triggerMotor.setPower(0);
+//        sleep(holdWait);
+//        while (triggerMotor.getCurrentPosition() < 0) {
+//            triggerMotor.setPower(1);
+//        }
+//        triggerMotor.setPower(0);
+//        sleep(intervalWait);
+//
+//        while (triggerMotor.getCurrentPosition() > targetPosition) {
+//            triggerMotor.setPower(-1);
+//        }
+//        triggerMotor.setPower(0);
+//        sleep(holdWait);
+//        while (triggerMotor.getCurrentPosition() < 0) {
+//            triggerMotor.setPower(1);
+//        }
+//        triggerMotor.setPower(0);
+//        sleep(intervalWait);
+//
+//        while (triggerMotor.getCurrentPosition() > targetPosition) {
+//            triggerMotor.setPower(-1);
+//        }
+//        triggerMotor.setPower(0);
+//        sleep(holdWait);
+//        while (triggerMotor.getCurrentPosition() < 0) {
+//            triggerMotor.setPower(1);
+//        }
+//        triggerMotor.setPower(0);
         sleep(500);
         motor.setPower(0);
         motor2.setPower(0);
