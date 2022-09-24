@@ -38,6 +38,7 @@ public class DriveTest extends OpMode
 
     boolean isSpinning = false;
 
+
     /*
      * Code to run ONCE when the driver hits INIT
      */
@@ -61,8 +62,12 @@ public class DriveTest extends OpMode
         triggerMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         intake.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
 
+
         telemetry.addData("Status", "Initialized");
+
     }
+
+
 
     /*
      * Code to run REPEATEDLY after the driver hits INIT, but before they hit PLAY
@@ -89,7 +94,7 @@ public class DriveTest extends OpMode
     @Override
 
     public void loop() {
-        if (gamepad1.x) {
+        if (gamepad1.a) {
             intake.setPower(-1);
         } else {
             intake.setPower(0);
