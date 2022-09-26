@@ -32,6 +32,7 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.Range;
@@ -53,8 +54,9 @@ import com.qualcomm.robotcore.util.Range;
 public class PushbotTeleOp extends OpMode{
 
     /* Declare OpMode members. */
-    public DcMotor  leftDrive   = null;
-    public DcMotor  rightDrive  = null;
+//    public DcMotor  leftDrive   = null;
+//    public DcMotor  rightDrive  = null;
+    public Servo servo = null;
 
     /*
      * Code to run ONCE when the driver hits INIT
@@ -62,14 +64,16 @@ public class PushbotTeleOp extends OpMode{
     @Override
     public void init() {
         // Define and Initialize Motors
-        leftDrive  = hardwareMap.get(DcMotor.class, "left_drive");
-        rightDrive = hardwareMap.get(DcMotor.class, "right_drive");
+//        leftDrive  = hardwareMap.get(DcMotor.class, "left_drive");
+//        rightDrive = hardwareMap.get(DcMotor.class, "right_drive");
+        servo = hardwareMap.get(Servo.class, "servo");
+        servo.setPosition(0);
 
         // To drive forward, most robots need the motor on one side to be reversed, because the axles point in opposite directions.
         // Pushing the left and right sticks forward MUST make robot go forward. So adjust these two lines based on your first test drive.
         // Note: The settings here assume direct drive on left and right wheels.  Gear Reduction or 90 Deg drives may require direction flips
-        leftDrive.setDirection(DcMotor.Direction.REVERSE);
-        rightDrive.setDirection(DcMotor.Direction.FORWARD);
+//        leftDrive.setDirection(DcMotor.Direction.REVERSE);
+//        rightDrive.setDirection(DcMotor.Direction.FORWARD);
 
         // If there are encoders connected, switch to RUN_USING_ENCODER mode for greater accuracy
         // robot.leftDrive.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
@@ -98,19 +102,31 @@ public class PushbotTeleOp extends OpMode{
      */
     @Override
     public void loop() {
-        double left;
-        double right;
+//        double left;
+//        double right;
+//
+//        // Run wheels in tank mode (note: The joystick goes negative when pushed forward, so negate it)
+//        left = -gamepad1.left_stick_y;
+//        right = -gamepad1.right_stick_y;
+//
+//        leftDrive.setPower(left);
+//        rightDrive.setPower(right);
+//
+//        // Send telemetry message to signify robot running;
+//        telemetry.addData("left",  "%.2f", left);
+//        telemetry.addData("right", "%.2f", right);
 
-        // Run wheels in tank mode (note: The joystick goes negative when pushed forward, so negate it)
-        left = -gamepad1.left_stick_y;
-        right = -gamepad1.right_stick_y;
+        if (gamepad1.dpad_left) {
+            servo.setPosition(0);
+            //servo.setPower(1);
+        } else if (gamepad1.dpad_down) {
+            servo.setPosition(0.5);
+            //servo.setPower(0);
+        } else if (gamepad1.dpad_right) {
+            servo.setPosition(1);
+            //servo.setPower(-1);
+        }
 
-        leftDrive.setPower(left);
-        rightDrive.setPower(right);
-
-        // Send telemetry message to signify robot running;
-        telemetry.addData("left",  "%.2f", left);
-        telemetry.addData("right", "%.2f", right);
     }
 
     /*

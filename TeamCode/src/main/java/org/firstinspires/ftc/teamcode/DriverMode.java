@@ -23,6 +23,8 @@ public class DriverMode extends OpMode {
     private DcMotor driveMotor2 = null;
     private DcMotor winch = null;
     private DcMotor linearSlide = null;
+    private Servo lowBarLeft = null;
+    private Servo lowBarRight = null;
     private ElapsedTime timeSinceToggle = new ElapsedTime();
 
     double integralSum = 0;
@@ -30,8 +32,13 @@ public class DriverMode extends OpMode {
     double Ki = 0;
     double Kd = 0;
     double Kf = 0;
-    boolean shooterOn = true;
+    boolean shooterOn = false;
     private double lastError = 0;
+
+    private final int winchMaxTicks = 2200000;
+    private int currentWinchTicks;
+    private final int slideMaxTicks = 540000;
+    private int currentSlideTicks;
 
     ElapsedTime timer = new ElapsedTime();
 
@@ -41,14 +48,18 @@ public class DriverMode extends OpMode {
         telemetry.update();
 
         //configuration
-        shooterMotor1 = hardwareMap.get(DcMotor.class, "shooterMotor1");
-        shooterMotor2 = hardwareMap.get(DcMotor.class, "shooterMotor2");
-        triggerMotor = hardwareMap.get(DcMotor.class, "triggerMotor");
-        intake = hardwareMap.get(DcMotor.class, "intake");
-        driveMotor1 = hardwareMap.get(DcMotorEx.class, "driveMotor1");
-        driveMotor2 = hardwareMap.get(DcMotorEx.class, "driveMotor2");
-        winch = hardwareMap.get(DcMotor.class, "winch");
-        linearSlide = hardwareMap.get(DcMotor.class, "linearSlide");
+        shooterMotor1 = hardwareMap.get(DcMotorEx.class, "BShooterMotor");
+        shooterMotor2 = hardwareMap.get(DcMotorEx.class, "FShooterMotor");
+        triggerMotor = hardwareMap.get(DcMotor.class, "TriggerMotor");
+        intake = hardwareMap.get(DcMotor.class, "Intake");
+        driveMotor1 = hardwareMap.get(DcMotorEx.class, "RightDriveMotor");
+        driveMotor2 = hardwareMap.get(DcMotorEx.class, "LeftDriveMotor");
+        winch = hardwareMap.get(DcMotor.class, "Winch");
+        linearSlide = hardwareMap.get(DcMotor.class, "LinearSlide");
+        lowBarLeft = hardwareMap.get(Servo.class, "LowBar1");
+        lowBarLeft.setPosition(0.5);
+        lowBarRight = hardwareMap.get(Servo.class, "LowBar2");
+        lowBarRight.setPosition(0.5);
 
         //direction
         shooterMotor1.setDirection(DcMotor.Direction.REVERSE);
@@ -57,8 +68,11 @@ public class DriverMode extends OpMode {
         intake.setDirection(DcMotor.Direction.FORWARD);
         driveMotor1.setDirection(DcMotor.Direction.REVERSE);
         driveMotor2.setDirection(DcMotor.Direction.FORWARD);
-        winch.setDirection(DcMotor.Direction.FORWARD);
+        winch.setDirection(DcMotor.Direction.REVERSE);
         linearSlide.setDirection(DcMotor.Direction.FORWARD);
+
+        winch.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        linearSlide.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
         //Encoder Usage
         triggerMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
@@ -70,11 +84,11 @@ public class DriverMode extends OpMode {
         shooterMotor1.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         shooterMotor2.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
-        shooterMotor1.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        shooterMotor2.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+//        shooterMotor1.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+//        shooterMotor2.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
 
-        double power = PIDControl (1000, shooterMotor1.getVelocity());
-        shooterMotor1.setPower(power);
+//        double power = PIDControl (1000, shooterMotor1.getVelocity());
+//        shooterMotor1.setPower(power);
     }
 
     public double PIDControl (double reference, double state) {
@@ -105,13 +119,18 @@ public class DriverMode extends OpMode {
     public void loop() {
 
         //Drive Train
-        driveMotor1.setPower(gamepad1.left_stick_y - gamepad1.left_stick_x);
-        driveMotor2.setPower(gamepad1.left_stick_x + gamepad1.left_stick_x);
+        driveMotor1.setPower(-gamepad1.left_stick_y - gamepad1.left_stick_x);
+        driveMotor2.setPower(-gamepad1.left_stick_y + gamepad1.left_stick_x);
+//        driveMotor1.setPower(gamepad1.left_stick_y);
+//        driveMotor2.setPower(gamepad1.right_stick_y);
+//        telemetry.addData("left", gamepad1.left_stick_y);
+//        telemetry.addData("right", gamepad1.right_stick_y);
 
-        telemetry..addData("Motor Speed", "%.2f", (float)speed);
+        //telemetry.addData("Motor Speed", "%.2f", (float)speed);
 
         //Winch Controls
-        if (gamepad1.a) {
+        currentWinchTicks = winch.getCurrentPosition();
+        if (gamepad1.a && currentWinchTicks > -winchMaxTicks) {
             winch.setPower(1);
         } else if (gamepad1.b) {
             winch.setPower(-1);
@@ -120,9 +139,10 @@ public class DriverMode extends OpMode {
         }
 
         //LinearSlide Controls
-        if (gamepad1.x) {
+        currentSlideTicks = linearSlide.getCurrentPosition();
+        if (gamepad1.x && currentSlideTicks < slideMaxTicks) {
             linearSlide.setPower(1);
-        } else if (gamepad1.y) {
+        } else if (gamepad1.y && currentSlideTicks > 0) {
             linearSlide.setPower(-1);
         } else {
             linearSlide.setPower(0);
@@ -138,22 +158,43 @@ public class DriverMode extends OpMode {
         }
 
         //Trigger Controls
-        if (gamepad1.left_trigger) {
+        if (gamepad1.left_trigger > 0) {
             triggerMotor.setPower(0.5);
-        } else if (gamepad1.right_trigger) {
+        } else if (gamepad1.right_trigger > 0) {
             triggerMotor.setPower(-0.5);
         } else {
             triggerMotor.setPower(0);
         }
 
         //Shooter Controls
-        if (gamepad1.dpad_up && shooterOn && timeSinceToggle.milliseconds() > 300) {
-            shooterOn = true;
-            timeSinceToggle.reset();
-        } else if (gamepad1.dpad_up && !shooterOn && timeSinceToggle.milliseconds() > 300) {
+        if (gamepad1.touchpad && shooterOn && timeSinceToggle.milliseconds() > 300) {
             shooterOn = false;
             timeSinceToggle.reset();
+        } else if (gamepad1.touchpad && !shooterOn && timeSinceToggle.milliseconds() > 300) {
+            shooterOn = true;
+            timeSinceToggle.reset();
         }
+        if (shooterOn) {
+            shooterMotor1.setPower(-1);
+            shooterMotor2.setPower(1);
+        } else {
+            shooterMotor1.setPower(0);
+            shooterMotor2.setPower(0);
+        }
+
+        //low bar controls
+        if (gamepad1.dpad_up) {
+            lowBarLeft.setPosition(lowBarLeft.getPosition() + 0.005);
+            lowBarRight.setPosition(lowBarRight.getPosition() - 0.005);
+        } else if (gamepad1.dpad_down) {
+            lowBarLeft.setPosition(lowBarLeft.getPosition() - 0.005);
+            lowBarRight.setPosition(lowBarRight.getPosition() + 0.005);
+        }
+
+        telemetry.addData("Winch Ticks", winch.getCurrentPosition());
+        telemetry.addData("Slide Ticks", linearSlide.getCurrentPosition());
+
+        telemetry.update();
     }
 
 
