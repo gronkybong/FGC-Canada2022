@@ -3,6 +3,7 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.hardware.motors.RevRoboticsCoreHexMotor;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
@@ -23,8 +24,8 @@ public class DriverMode extends OpMode {
     private DcMotor driveMotor2 = null;
     private DcMotor winch = null;
     private DcMotor linearSlide = null;
-    private Servo lowBarLeft = null;
-    private Servo lowBarRight = null;
+    private CRServo lowBarLeft = null;
+    private CRServo lowBarRight = null;
     private Servo winchLock = null;
     private ElapsedTime timeSinceToggle = new ElapsedTime();
     private ElapsedTime timeSinceToggle2 = new ElapsedTime();
@@ -40,10 +41,12 @@ public class DriverMode extends OpMode {
     boolean isWinchLocked = false;
     private double lastError = 0;
 
-    private final int winchMaxTicks = 2200000;
+    private final int winchMaxTicks = 12350;
     private int currentWinchTicks;
-    private final int slideMaxTicks = 540000;
+    private final int slideMaxTicks = 2000;
     private int currentSlideTicks;
+
+    private double slideWinchConversion = 6.5;
 
     ElapsedTime timer = new ElapsedTime();
 
@@ -61,10 +64,12 @@ public class DriverMode extends OpMode {
         driveMotor2 = hardwareMap.get(DcMotorEx.class, "LeftDriveMotor");
         winch = hardwareMap.get(DcMotor.class, "Winch");
         linearSlide = hardwareMap.get(DcMotor.class, "LinearSlide");
-        lowBarLeft = hardwareMap.get(Servo.class, "LowBar1");
-        lowBarLeft.setPosition(0.5);
-        lowBarRight = hardwareMap.get(Servo.class, "LowBar2");
-        lowBarRight.setPosition(0.5);
+        lowBarLeft = hardwareMap.get(CRServo.class, "LowBar1");
+        //lowBarLeft.setPosition(1);
+        lowBarLeft.setDirection(DcMotorSimple.Direction.FORWARD);
+        lowBarRight = hardwareMap.get(CRServo.class, "LowBar2");
+        //lowBarRight.setPosition(0);
+        lowBarRight.setDirection(DcMotorSimple.Direction.REVERSE);
         winchLock = hardwareMap.get(Servo.class, "WinchLock");
         winchLock.setPosition(0.5);
 
@@ -86,8 +91,8 @@ public class DriverMode extends OpMode {
         intake.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         driveMotor1.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         driveMotor2.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        winch.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        linearSlide.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        winch.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        linearSlide.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         shooterMotor1.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         shooterMotor2.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
@@ -172,13 +177,22 @@ public class DriverMode extends OpMode {
         }
 
         //low bar controls
-        if (gamepad1.dpad_up) {
-            lowBarLeft.setPosition(lowBarLeft.getPosition() + 0.005);
-            lowBarRight.setPosition(lowBarRight.getPosition() - 0.005);
-        } else if (gamepad1.dpad_down) {
-            lowBarLeft.setPosition(lowBarLeft.getPosition() - 0.005);
-            lowBarRight.setPosition(lowBarRight.getPosition() + 0.005);
-        }
+//        if (gamepad2.dpad_up) {
+////            lowBarLeft.setPosition(lowBarLeft.getPosition() + 0.005);
+////            lowBarRight.setPosition(lowBarRight.getPosition() - 0.005);
+//            lowBarLeft.setPower(0.2);
+//            lowBarRight.setPower(0.2);
+//        } else if (gamepad2.dpad_down) {
+////            lowBarLeft.setPosition(lowBarLeft.getPosition() - 0.005);
+////            lowBarRight.setPosition(lowBarRight.getPosition() + 0.005);
+//            lowBarLeft.setPower(-0.2);
+//            lowBarRight.setPower(-0.2);
+//        } else {
+//            lowBarLeft.setPower(0);
+//            lowBarRight.setPower(0);
+//        }
+        lowBarLeft.setPower(gamepad2.left_stick_y);
+        lowBarRight.setPower(gamepad2.right_stick_y);
 
         //lock controls
         if (gamepad1.dpad_left && isWinchLocked && timeSinceToggle3.milliseconds() > 300) {
@@ -198,19 +212,23 @@ public class DriverMode extends OpMode {
         currentWinchTicks = winch.getCurrentPosition();
         currentSlideTicks = linearSlide.getCurrentPosition();
         if (!slideWinchSync) {
-            if (gamepad1.cross && currentWinchTicks > -winchMaxTicks) {
+            winch.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            if (gamepad1.cross && currentWinchTicks > -winchMaxTicks && !isWinchLocked) {
+                winch.setPower(-0.3);
+                telemetry.addData("unwind", false);
+            } else if (gamepad1.circle && currentWinchTicks < 800) {
                 winch.setPower(1);
-            } else if (gamepad1.circle && !isWinchLocked) {
-                winch.setPower(-1);
+                telemetry.addData("wind", true);
             } else {
                 winch.setPower(0);
+                telemetry.addData("not doing anything", false);
             }
 
             //LinearSlide Controls
             if (gamepad1.triangle && currentSlideTicks < slideMaxTicks) {
                 linearSlide.setPower(1);
             } else if (gamepad1.square && currentSlideTicks > 0) {
-                linearSlide.setPower(-1);
+                linearSlide.setPower(-0.6);
             } else {
                 linearSlide.setPower(0);
             }
@@ -225,18 +243,47 @@ public class DriverMode extends OpMode {
             timeSinceToggle2.reset();
         }
 
-        if (gamepad1.triangle && currentSlideTicks < slideMaxTicks) {
-            linearSlide.setPower(0.95);
+        if (slideWinchSync) {
+            if (gamepad1.triangle && currentSlideTicks < slideMaxTicks) {
+                linearSlide.setPower(1);
+            } else if (gamepad1.square && currentSlideTicks > 0) {
+                linearSlide.setPower(-0.3);
+            } else {
+                linearSlide.setPower(0);
+            }
+            if (currentSlideTicks < 500) {
+                slideWinchConversion = 5.7;
+            }
+            else if (currentSlideTicks < 1000 && currentSlideTicks > 500) {
+                slideWinchConversion = 6.3;
+            } else if (currentSlideTicks > 1000 && currentSlideTicks < 1800) {
+                slideWinchConversion = 7.3;
+            } else if (currentSlideTicks > 1800) {
+                slideWinchConversion = 7.1;
+            }
+            winch.setTargetPosition(-(int) slideWinchConversion * currentSlideTicks);
+            winch.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             winch.setPower(1);
-        } else if (gamepad1.square && currentSlideTicks > 0) {
-            linearSlide.setPower(-0.95);
-            winch.setPower(-1);
-        } else {
-            linearSlide.setPower(0);
+            //-12200
         }
 
+//        if (slideWinchSync) {
+//            if (gamepad1.triangle && currentSlideTicks < slideMaxTicks) {
+//                linearSlide.setPower(0.6);
+//                winch.setPower(-0.2);
+//            } else if (gamepad1.square && currentSlideTicks > 0) {
+//                linearSlide.setPower(-0.95);
+//                winch.setPower(1);
+//            } else {
+//                linearSlide.setPower(0);
+//                winch.setPower(0);
+//            }
+//        }
         telemetry.addData("Winch Ticks", winch.getCurrentPosition());
         telemetry.addData("Slide Ticks", linearSlide.getCurrentPosition());
+        telemetry.addData("winch lock:", isWinchLocked);
+        telemetry.addData("sync:", slideWinchSync);
+        telemetry.addData("ratio:", slideWinchConversion);
     }
 
 
