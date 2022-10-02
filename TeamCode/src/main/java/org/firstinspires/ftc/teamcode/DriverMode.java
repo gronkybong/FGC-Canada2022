@@ -26,6 +26,7 @@ public class DriverMode extends OpMode {
     private ElapsedTime timeSinceToggle = new ElapsedTime();
     private ElapsedTime timeSinceToggle2 = new ElapsedTime();
     private ElapsedTime timeSinceToggle3 = new ElapsedTime();
+    private ElapsedTime shooterTimer = new ElapsedTime();
 
     double integralSum = 0;
     double Kp = 0;
@@ -47,6 +48,13 @@ public class DriverMode extends OpMode {
     private double slideWinchConversion = 6.5;
     double drivePower = 0.75;
     double leftStickYTranslated;
+
+    int lastShooterTick1 = 0;
+    int lastShooterTick2 = 0;
+    int currentShooterTick1;
+    int currentShooterTick2;
+    int currentShooterRPM1;
+    int currentShooterRPM2;
 
     ElapsedTime timer = new ElapsedTime();
 
@@ -116,10 +124,6 @@ public class DriverMode extends OpMode {
         return output;
     }
 
-    @Override
-    public void init_loop() {
-    }
-
     /*
      * Code to run ONCE when the driver hits PLAY
      */
@@ -185,6 +189,14 @@ public class DriverMode extends OpMode {
             shooterMotor2.setPower(0);
         }
 
+        currentShooterTick1 = shooterMotor1.getCurrentPosition();
+        currentShooterRPM1 = (int) (Math.abs(currentShooterTick1 - lastShooterTick1)/shooterTimer.milliseconds())*1000*60/28;
+        lastShooterTick1 = currentShooterTick1;
+        currentShooterTick2 = shooterMotor2.getCurrentPosition();
+        currentShooterRPM2 = (int) (Math.abs(currentShooterTick2 - lastShooterTick2)/shooterTimer.milliseconds())*1000*60/28;
+        lastShooterTick2 = currentShooterTick2;
+        shooterTimer.reset();
+
         //low bar controls
 //        if (gamepad2.dpad_up) {
 ////            lowBarLeft.setPosition(lowBarLeft.getPosition() + 0.005);
@@ -248,8 +260,7 @@ public class DriverMode extends OpMode {
         if (slideWinchSync) {
             if (currentSlideTicks < 500) {
                 slideWinchConversion = 5.8;
-            }
-            else if (currentSlideTicks < 1000 && currentSlideTicks > 500) {
+            } else if (currentSlideTicks < 1000 && currentSlideTicks > 500) {
                 slideWinchConversion = 6.1;
             } else if (currentSlideTicks > 1000 && currentSlideTicks < 1800) {
                 slideWinchConversion = 7.1;
@@ -381,13 +392,16 @@ public class DriverMode extends OpMode {
 //                winch.setPower(0);
 //            }
 //        }
-        telemetry.addData("Winch Ticks", winch.getCurrentPosition());
-        telemetry.addData("Slide Ticks", linearSlide.getCurrentPosition());
-        telemetry.addData("winch lock:", isWinchLocked);
-        telemetry.addData("sync:", slideWinchSync);
-        telemetry.addData("ratio:", slideWinchConversion);
-        telemetry.addData("left stick 2", gamepad2.left_stick_y);
-        telemetry.addData("left stick translated", leftStickYTranslated);
+//        telemetry.addData("Winch Ticks", winch.getCurrentPosition());
+//        telemetry.addData("Slide Ticks", linearSlide.getCurrentPosition());
+//        telemetry.addData("winch lock:", isWinchLocked);
+//        telemetry.addData("sync:", slideWinchSync);
+//        telemetry.addData("ratio:", slideWinchConversion);
+//        telemetry.addData("left stick 2", gamepad2.left_stick_y);
+//        telemetry.addData("left stick translated", leftStickYTranslated);
+        telemetry.addData("shooter1", currentShooterRPM1);
+        telemetry.addData("shooter2", currentShooterRPM2);
+        telemetry.update();
     }
 
     @Override
