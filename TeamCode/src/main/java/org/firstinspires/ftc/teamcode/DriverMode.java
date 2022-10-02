@@ -46,6 +46,7 @@ public class DriverMode extends OpMode {
 
     private double slideWinchConversion = 6.5;
     double drivePower = 0.75;
+    double leftStickYTranslated;
 
     ElapsedTime timer = new ElapsedTime();
 
@@ -137,7 +138,7 @@ public class DriverMode extends OpMode {
         } else if (gamepad1.right_trigger > 0) {
             drivePower = 1;
         } else {
-            drivePower = 0.75;
+            drivePower = 0.65;
         }
 
         driveMotor1.setPower((-gamepad1.left_stick_y - gamepad1.right_stick_x) * drivePower);
@@ -198,8 +199,16 @@ public class DriverMode extends OpMode {
 //            lowBarLeft.setPower(0);
 //            lowBarRight.setPower(0);
 //        }
-        lowBarLeft.setPower(gamepad2.left_stick_y);
-        lowBarRight.setPower(gamepad2.left_stick_y * 0.9);
+        if (gamepad2.left_stick_y < 0.4) {
+            leftStickYTranslated = (gamepad2.left_stick_y * 2.5) - 1;
+        } else if (gamepad2.left_stick_y >= 0.4 && gamepad2.left_stick_y <= 0.6) {
+            leftStickYTranslated = 0;
+        } else if (gamepad2.left_stick_y > 0.6) {
+            leftStickYTranslated = (gamepad2.left_stick_y * 2.5) - 1.5;
+        }
+
+        lowBarLeft.setPower(leftStickYTranslated);
+        lowBarRight.setPower(leftStickYTranslated * 0.9);
 
         //lock controls
 //        if (gamepad1.dpad_left && isWinchLocked && timeSinceToggle3.milliseconds() > 300) {
@@ -235,10 +244,10 @@ public class DriverMode extends OpMode {
 
         if (slideWinchSync) {
             if (currentSlideTicks < 500) {
-                slideWinchConversion = 5.7;
+                slideWinchConversion = 6.0;
             }
             else if (currentSlideTicks < 1000 && currentSlideTicks > 500) {
-                slideWinchConversion = 6.3;
+                slideWinchConversion = 6.4;
             } else if (currentSlideTicks > 1000 && currentSlideTicks < 1800) {
                 slideWinchConversion = 7.3;
             } else if (currentSlideTicks > 1800) {
@@ -262,22 +271,36 @@ public class DriverMode extends OpMode {
         }
 
         if (slideAuto) {
-            linearSlide.setTargetPosition(1000);
+            linearSlide.setTargetPosition(800);
             linearSlide.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             linearSlide.setPower(0.6);
         }
 
         if (gamepad1.square && currentWinchTicks > -winchMaxTicks) {
             isWinchLocked = false;
+            winch.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
             winch.setPower(-0.3);
             telemetry.addData("unwind", false);
-        } else if (gamepad1.circle && currentWinchTicks < 800) {
+        } else if (gamepad1.circle && currentWinchTicks < 1500) {
             isWinchLocked = true;
+            winch.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
             winch.setPower(1);
             telemetry.addData("wind", true);
         } else if (!slideWinchSync) {
+            winch.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
             winch.setPower(0);
             telemetry.addData("not doing anything", false);
+        }
+
+        if (gamepad1.triangle) {
+            winch.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+            if (gamepad1.dpad_down) {
+                winch.setPower(0.5);
+            } else if (gamepad1.dpad_up) {
+                winch.setPower(-0.5);
+            } else {
+                winch.setPower(0);
+            }
         }
 
         if (!(gamepad2.triangle || gamepad2.square || gamepad2.cross || gamepad2.circle || gamepad2.dpad_down || slideAuto)) {
@@ -360,8 +383,9 @@ public class DriverMode extends OpMode {
         telemetry.addData("winch lock:", isWinchLocked);
         telemetry.addData("sync:", slideWinchSync);
         telemetry.addData("ratio:", slideWinchConversion);
+        telemetry.addData("left stick 2", gamepad2.left_stick_y);
+        telemetry.addData("left stick translated", leftStickYTranslated);
     }
-
 
     @Override
     public void stop() {
