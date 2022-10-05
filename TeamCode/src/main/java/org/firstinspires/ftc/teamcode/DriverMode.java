@@ -1,5 +1,6 @@
 package org.firstinspires.ftc.teamcode;
 
+import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.CRServo;
@@ -9,9 +10,13 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.qualcomm.robotcore.hardware.Servo;
 
+import com.stormbots.MiniPID;
+
 @TeleOp(name ="DriverMode", group="Tests")
 
 public class DriverMode extends OpMode {
+    public LinearOpMode opMode;
+
     private DcMotorEx shooterMotor1 = null;
     private DcMotorEx shooterMotor2 = null;
     private DcMotor triggerMotor = null;
@@ -26,6 +31,7 @@ public class DriverMode extends OpMode {
     private final ElapsedTime timeSinceToggle = new ElapsedTime();
     private final ElapsedTime timeSinceToggle2 = new ElapsedTime();
     private final ElapsedTime timeSinceToggle3 = new ElapsedTime();
+    private final ElapsedTime timeSinceToggle4 = new ElapsedTime();
     private final ElapsedTime shooterTimer = new ElapsedTime();
 
     double integralSum = 0;
@@ -55,9 +61,14 @@ public class DriverMode extends OpMode {
     int currentShooterTick2;
     int shooterTickDiff1;
     int shooterTickDiff2;
-    int currentShooterRPM1;
-    int currentShooterRPM2;
+    double currentShooterRPM1;
+    double currentShooterRPM2;
     double timerOutput;
+    double lastTime = 0;
+    double currentTime;
+    double timeDiff;
+
+    int wiggleCount = -1;
 
     ElapsedTime timer = new ElapsedTime();
 
@@ -134,6 +145,7 @@ public class DriverMode extends OpMode {
         timeSinceToggle.reset();
         timeSinceToggle2.reset();
         timeSinceToggle3.reset();
+        timeSinceToggle4.reset();
     }
 
     @Override
@@ -148,8 +160,10 @@ public class DriverMode extends OpMode {
             drivePower = 0.65;
         }
 
-        driveMotor1.setPower((-gamepad1.left_stick_y - gamepad1.right_stick_x) * drivePower);
-        driveMotor2.setPower((-gamepad1.left_stick_y + gamepad1.right_stick_x) * drivePower);
+        if (wiggleCount == -1) {
+            driveMotor1.setPower((-gamepad1.left_stick_y - gamepad1.right_stick_x) * drivePower);
+            driveMotor2.setPower((-gamepad1.left_stick_y + gamepad1.right_stick_x) * drivePower);
+        }
 //        driveMotor1.setPower(gamepad1.left_stick_y);
 //        driveMotor2.setPower(gamepad1.right_stick_y);
 //        telemetry.addData("left", gamepad1.left_stick_y);
@@ -191,16 +205,19 @@ public class DriverMode extends OpMode {
             shooterMotor2.setPower(0);
         }
 
-        timerOutput = shooterTimer.milliseconds();
+        //timerOutput = shooterTimer.milliseconds();
+        currentTime = (double) System.currentTimeMillis();
+        timeDiff = Math.abs(currentTime - lastTime);
         currentShooterTick1 = shooterMotor1.getCurrentPosition();
         shooterTickDiff1 = Math.abs(currentShooterTick1 - lastShooterTick1);
-        currentShooterRPM1 = (int) (shooterTickDiff1/timerOutput)*1000*60/28;
+        currentShooterRPM1 = (shooterTickDiff1/timeDiff)*1000*60/28;
         lastShooterTick1 = currentShooterTick1;
         currentShooterTick2 = shooterMotor2.getCurrentPosition();
         shooterTickDiff2 = Math.abs(currentShooterTick2 - lastShooterTick2);
-        currentShooterRPM2 = (int) (shooterTickDiff2/timerOutput)*1000*60/28;
+        currentShooterRPM2 = (shooterTickDiff2/timeDiff)*1000*60/28;
         lastShooterTick2 = currentShooterTick2;
-        shooterTimer.reset();
+        lastTime = currentTime;
+        //shooterTimer.reset();
 
         //low bar controls
 //        if (gamepad2.dpad_up) {
@@ -327,6 +344,23 @@ public class DriverMode extends OpMode {
             linearSlide.setPower(0);
         }
 
+        if (gamepad1.touchpad && timeSinceToggle4.milliseconds()> 500 ) {
+            wiggleCount = 0;
+        }
+
+        if (wiggleCount >= 0 && wiggleCount < 10) {
+            driveMotor1.setPower(-1);
+            driveMotor2.setPower(-1);
+            wiggleCount++;
+        } else if (wiggleCount >= 10 && wiggleCount < 40) {
+            driveMotor1.setPower(1);
+            driveMotor2.setPower(1);
+            wiggleCount++;
+
+        } else if (wiggleCount >= 40) {
+            wiggleCount = -1;
+        }
+
         //Winch Controls
 
 //        if (!slideWinchSync) {
@@ -404,10 +438,10 @@ public class DriverMode extends OpMode {
 //        telemetry.addData("ratio:", slideWinchConversion);
 //        telemetry.addData("left stick 2", gamepad2.left_stick_y);
 //        telemetry.addData("left stick translated", leftStickYTranslated);
-        telemetry.addData("shooter1", currentShooterRPM1);
-        //telemetry.addData("shooter2", currentShooterRPM2);
+        telemetry.addData("shooter1", String.format("%.2f", currentShooterRPM1));
+        telemetry.addData("shooter2", String.format("%.2f", currentShooterRPM2));
         telemetry.addData("difference", shooterTickDiff1);
-        telemetry.addData("timer", timerOutput);
+        telemetry.addData("timer", timeDiff);
     }
 
     @Override
