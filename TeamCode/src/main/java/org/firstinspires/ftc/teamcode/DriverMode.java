@@ -23,10 +23,10 @@ public class DriverMode extends OpMode {
     private CRServo lowBarLeft = null;
     private CRServo lowBarRight = null;
     private Servo winchLock = null;
-    private ElapsedTime timeSinceToggle = new ElapsedTime();
-    private ElapsedTime timeSinceToggle2 = new ElapsedTime();
-    private ElapsedTime timeSinceToggle3 = new ElapsedTime();
-    private ElapsedTime shooterTimer = new ElapsedTime();
+    private final ElapsedTime timeSinceToggle = new ElapsedTime();
+    private final ElapsedTime timeSinceToggle2 = new ElapsedTime();
+    private final ElapsedTime timeSinceToggle3 = new ElapsedTime();
+    private final ElapsedTime shooterTimer = new ElapsedTime();
 
     double integralSum = 0;
     double Kp = 0;
@@ -39,7 +39,7 @@ public class DriverMode extends OpMode {
     boolean slideAuto = false;
     private double lastError = 0;
 
-    private int winchMaxTicks = 12350;
+    private final int winchMaxTicks = 12350;
     private int currentWinchTicks;
     private final int slideMaxTicksMax = 2000;
     private final int slideMaxTicksMid = 1300;
@@ -53,8 +53,11 @@ public class DriverMode extends OpMode {
     int lastShooterTick2 = 0;
     int currentShooterTick1;
     int currentShooterTick2;
+    int shooterTickDiff1;
+    int shooterTickDiff2;
     int currentShooterRPM1;
     int currentShooterRPM2;
+    double timerOutput;
 
     ElapsedTime timer = new ElapsedTime();
 
@@ -120,8 +123,7 @@ public class DriverMode extends OpMode {
 
         timer.reset();
 
-        double output = (error * Kp) + (derivative * Kd) + (integralSum * Ki) + (reference * Kf);
-        return output;
+        return (error * Kp) + (derivative * Kd) + (integralSum * Ki) + (reference * Kf);
     }
 
     /*
@@ -189,11 +191,14 @@ public class DriverMode extends OpMode {
             shooterMotor2.setPower(0);
         }
 
+        timerOutput = shooterTimer.milliseconds();
         currentShooterTick1 = shooterMotor1.getCurrentPosition();
-        currentShooterRPM1 = (int) (Math.abs(currentShooterTick1 - lastShooterTick1)/shooterTimer.milliseconds())*1000*60/28;
+        shooterTickDiff1 = Math.abs(currentShooterTick1 - lastShooterTick1);
+        currentShooterRPM1 = (int) (shooterTickDiff1/timerOutput)*1000*60/28;
         lastShooterTick1 = currentShooterTick1;
         currentShooterTick2 = shooterMotor2.getCurrentPosition();
-        currentShooterRPM2 = (int) (Math.abs(currentShooterTick2 - lastShooterTick2)/shooterTimer.milliseconds())*1000*60/28;
+        shooterTickDiff2 = Math.abs(currentShooterTick2 - lastShooterTick2);
+        currentShooterRPM2 = (int) (shooterTickDiff2/timerOutput)*1000*60/28;
         lastShooterTick2 = currentShooterTick2;
         shooterTimer.reset();
 
@@ -400,8 +405,9 @@ public class DriverMode extends OpMode {
 //        telemetry.addData("left stick 2", gamepad2.left_stick_y);
 //        telemetry.addData("left stick translated", leftStickYTranslated);
         telemetry.addData("shooter1", currentShooterRPM1);
-        telemetry.addData("shooter2", currentShooterRPM2);
-        telemetry.update();
+        //telemetry.addData("shooter2", currentShooterRPM2);
+        telemetry.addData("difference", shooterTickDiff1);
+        telemetry.addData("timer", timerOutput);
     }
 
     @Override
