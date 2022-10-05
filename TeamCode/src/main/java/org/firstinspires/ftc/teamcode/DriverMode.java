@@ -70,6 +70,8 @@ public class DriverMode extends OpMode {
 
     int wiggleCount = -1;
 
+    MiniPID shooterPID1 = new MiniPID(0.0004, 0, 0);
+
     ElapsedTime timer = new ElapsedTime();
 
     @Override
@@ -197,8 +199,11 @@ public class DriverMode extends OpMode {
             shooterOn = true;
             timeSinceToggle.reset();
         }
+        shooterPID1.setOutputLimits(1);
+        double shooter1Power = shooterPID1.getOutput(shooterMotor1.getVelocity(), -4400);
         if (shooterOn) {
-            shooterMotor1.setPower(-1);
+            shooterMotor1.setPower(shooter1Power);
+            //shooterMotor1.setPower(-1);
             shooterMotor2.setPower(1);
         } else {
             shooterMotor1.setPower(0);
@@ -206,17 +211,17 @@ public class DriverMode extends OpMode {
         }
 
         //timerOutput = shooterTimer.milliseconds();
-        currentTime = (double) System.currentTimeMillis();
-        timeDiff = Math.abs(currentTime - lastTime);
-        currentShooterTick1 = shooterMotor1.getCurrentPosition();
-        shooterTickDiff1 = Math.abs(currentShooterTick1 - lastShooterTick1);
-        currentShooterRPM1 = (shooterTickDiff1/timeDiff)*1000*60/28;
-        lastShooterTick1 = currentShooterTick1;
-        currentShooterTick2 = shooterMotor2.getCurrentPosition();
-        shooterTickDiff2 = Math.abs(currentShooterTick2 - lastShooterTick2);
-        currentShooterRPM2 = (shooterTickDiff2/timeDiff)*1000*60/28;
-        lastShooterTick2 = currentShooterTick2;
-        lastTime = currentTime;
+//        currentTime = (double) System.currentTimeMillis();
+//        timeDiff = Math.abs(currentTime - lastTime);
+//        currentShooterTick1 = shooterMotor1.getCurrentPosition();
+//        shooterTickDiff1 = Math.abs(currentShooterTick1 - lastShooterTick1);
+//        currentShooterRPM1 = (shooterTickDiff1/timeDiff)*1000*60/28;
+//        lastShooterTick1 = currentShooterTick1;
+//        currentShooterTick2 = shooterMotor2.getCurrentPosition();
+//        shooterTickDiff2 = Math.abs(currentShooterTick2 - lastShooterTick2);
+//        currentShooterRPM2 = (shooterTickDiff2/timeDiff)*1000*60/28;
+//        lastShooterTick2 = currentShooterTick2;
+//        lastTime = currentTime;
         //shooterTimer.reset();
 
         //low bar controls
@@ -438,10 +443,12 @@ public class DriverMode extends OpMode {
 //        telemetry.addData("ratio:", slideWinchConversion);
 //        telemetry.addData("left stick 2", gamepad2.left_stick_y);
 //        telemetry.addData("left stick translated", leftStickYTranslated);
-        telemetry.addData("shooter1", String.format("%.2f", currentShooterRPM1));
-        telemetry.addData("shooter2", String.format("%.2f", currentShooterRPM2));
-        telemetry.addData("difference", shooterTickDiff1);
-        telemetry.addData("timer", timeDiff);
+//        telemetry.addData("shooter1", String.format("%.2f", currentShooterRPM1));
+//        telemetry.addData("shooter2", String.format("%.2f", currentShooterRPM2));
+//        telemetry.addData("difference", shooterTickDiff1);
+//        telemetry.addData("timer", timeDiff);
+        telemetry.addData("shooter1", shooterMotor1.getVelocity() * 60 / 28);
+        telemetry.addData("shooter1Power", shooter1Power);
     }
 
     @Override
