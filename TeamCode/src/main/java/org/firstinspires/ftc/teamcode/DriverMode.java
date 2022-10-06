@@ -264,7 +264,7 @@ public class DriverMode extends OpMode {
         currentSlideTicks = linearSlide.getCurrentPosition();
 
         if (isWinchLocked) {
-            winchLock.setPosition(0.54);
+            winchLock.setPosition(0.56);
         } else {
             winchLock.setPosition(0.5);
         }
@@ -286,13 +286,13 @@ public class DriverMode extends OpMode {
 
         if (slideWinchSync) {
             if (currentSlideTicks < 500) {
-                slideWinchConversion = 5.8;
+                slideWinchConversion = 6;
             } else if (currentSlideTicks < 1000 && currentSlideTicks > 500) {
-                slideWinchConversion = 6.1;
+                slideWinchConversion = 6.3;
             } else if (currentSlideTicks > 1000 && currentSlideTicks < 1800) {
-                slideWinchConversion = 7.1;
+                slideWinchConversion = 7.4;
             } else if (currentSlideTicks > 1800) {
-                slideWinchConversion = 7;
+                slideWinchConversion = 7.2;
             }
             winch.setTargetPosition(-(int) slideWinchConversion * currentSlideTicks);
             winch.setMode(DcMotor.RunMode.RUN_TO_POSITION);
@@ -436,11 +436,11 @@ public class DriverMode extends OpMode {
 //                winch.setPower(0);
 //            }
 //        }
-//        telemetry.addData("Winch Ticks", winch.getCurrentPosition());
-//        telemetry.addData("Slide Ticks", linearSlide.getCurrentPosition());
+        telemetry.addData("Winch Ticks", winch.getCurrentPosition());
+        telemetry.addData("Slide Ticks", linearSlide.getCurrentPosition());
 //        telemetry.addData("winch lock:", isWinchLocked);
 //        telemetry.addData("sync:", slideWinchSync);
-//        telemetry.addData("ratio:", slideWinchConversion);
+        telemetry.addData("ratio:", slideWinchConversion);
 //        telemetry.addData("left stick 2", gamepad2.left_stick_y);
 //        telemetry.addData("left stick translated", leftStickYTranslated);
 //        telemetry.addData("shooter1", String.format("%.2f", currentShooterRPM1));
