@@ -29,7 +29,7 @@ public class DriverMode extends OpMode {
     private CRServo lowBarRight = null;
     private Servo winchLock = null;
     private Servo hookLock = null;
-//    private Servo intakeLock = null;
+    private Servo intakeLock = null;
     private final ElapsedTime timeSinceToggle = new ElapsedTime();
     private final ElapsedTime timeSinceToggle2 = new ElapsedTime();
     private final ElapsedTime timeSinceToggle3 = new ElapsedTime();
@@ -46,7 +46,7 @@ public class DriverMode extends OpMode {
     boolean slideWinchSync = true;
     boolean isWinchLocked = false;
     boolean isHookLocked = true;
-//    boolean isIntakeLocked = true;
+    boolean isIntakeLocked = true;
     boolean slideAuto = false;
     private double lastError = 0;
 
@@ -103,8 +103,8 @@ public class DriverMode extends OpMode {
         winchLock.setPosition(0.5);
         hookLock = hardwareMap.get(Servo.class, "HookLock");
         hookLock.setPosition(0.3);
-//        intakeLock = hardwareMap.get(Servo.class, "IntakeLock");
-//        intakeLock.setPosition(0.5);
+        intakeLock = hardwareMap.get(Servo.class, "IntakeLock");
+        intakeLock.setPosition(0.5);
 
         //direction
         shooterMotor1.setDirection(DcMotor.Direction.REVERSE);
@@ -210,11 +210,11 @@ public class DriverMode extends OpMode {
             timeSinceToggle.reset();
         }
         shooterPID1.setOutputLimits(1);
-        double shooter1Power = shooterPID1.getOutput(shooterMotor1.getVelocity(), -800);
+        double shooter1Power = shooterPID1.getOutput(shooterMotor1.getVelocity(), -4400);
         if (shooterOn) {
             shooterMotor1.setPower(shooter1Power);
             //shooterMotor1.setPower(-1);
-            shooterMotor2.setPower(0.2);
+            shooterMotor2.setPower(1);
         } else {
             shooterMotor1.setPower(0);
             shooterMotor2.setPower(0);
@@ -290,16 +290,16 @@ public class DriverMode extends OpMode {
             hookLock.setPosition(0.5);
         }
 
-//        if ((gamepad1.dpad_right || gamepad2.dpad_right) && timeSinceToggle5.milliseconds() > 300) {
-//            isIntakeLocked = !isIntakeLocked;
-//            timeSinceToggle5.reset();
-//        }
-//
-//        if (isIntakeLocked) {
-//            intakeLock.setPosition(0.25);
-//        } else {
-//            intakeLock.setPosition(0.5);
-//        }
+        if ((gamepad1.dpad_right || gamepad2.dpad_right) && timeSinceToggle5.milliseconds() > 300) {
+            isIntakeLocked = !isIntakeLocked;
+            timeSinceToggle5.reset();
+        }
+
+        if (isIntakeLocked) {
+            intakeLock.setPosition(0.25);
+        } else {
+            intakeLock.setPosition(0.5);
+        }
 
         if (gamepad2.triangle && currentSlideTicks < slideMaxTicksMax) {
             slideWinchSync = true;
