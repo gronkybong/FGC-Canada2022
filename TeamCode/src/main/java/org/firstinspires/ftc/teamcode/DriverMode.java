@@ -28,11 +28,14 @@ public class DriverMode extends OpMode {
     private CRServo lowBarLeft = null;
     private CRServo lowBarRight = null;
     private Servo winchLock = null;
+    private Servo hookLock = null;
+//    private Servo intakeLock = null;
     private final ElapsedTime timeSinceToggle = new ElapsedTime();
     private final ElapsedTime timeSinceToggle2 = new ElapsedTime();
     private final ElapsedTime timeSinceToggle3 = new ElapsedTime();
     private final ElapsedTime timeSinceToggle4 = new ElapsedTime();
-    private final ElapsedTime shooterTimer = new ElapsedTime();
+    private final ElapsedTime timeSinceToggle5 = new ElapsedTime();
+//    private final ElapsedTime shooterTimer = new ElapsedTime();
 
     double integralSum = 0;
     double Kp = 0;
@@ -42,6 +45,8 @@ public class DriverMode extends OpMode {
     boolean shooterOn = false;
     boolean slideWinchSync = true;
     boolean isWinchLocked = false;
+    boolean isHookLocked = true;
+//    boolean isIntakeLocked = true;
     boolean slideAuto = false;
     private double lastError = 0;
 
@@ -55,18 +60,18 @@ public class DriverMode extends OpMode {
     double drivePower = 0.75;
     double leftStickYTranslated;
 
-    int lastShooterTick1 = 0;
-    int lastShooterTick2 = 0;
-    int currentShooterTick1;
-    int currentShooterTick2;
-    int shooterTickDiff1;
-    int shooterTickDiff2;
-    double currentShooterRPM1;
-    double currentShooterRPM2;
-    double timerOutput;
-    double lastTime = 0;
-    double currentTime;
-    double timeDiff;
+//    int lastShooterTick1 = 0;
+//    int lastShooterTick2 = 0;
+//    int currentShooterTick1;
+//    int currentShooterTick2;
+//    int shooterTickDiff1;
+//    int shooterTickDiff2;
+//    double currentShooterRPM1;
+//    double currentShooterRPM2;
+//    double timerOutput;
+//    double lastTime = 0;
+//    double currentTime;
+//    double timeDiff;
 
     int wiggleCount = -1;
 
@@ -96,6 +101,10 @@ public class DriverMode extends OpMode {
         lowBarRight.setDirection(DcMotorSimple.Direction.REVERSE);
         winchLock = hardwareMap.get(Servo.class, "WinchLock");
         winchLock.setPosition(0.5);
+        hookLock = hardwareMap.get(Servo.class, "HookLock");
+        hookLock.setPosition(0.3);
+//        intakeLock = hardwareMap.get(Servo.class, "IntakeLock");
+//        intakeLock.setPosition(0.5);
 
         //direction
         shooterMotor1.setDirection(DcMotor.Direction.REVERSE);
@@ -148,6 +157,7 @@ public class DriverMode extends OpMode {
         timeSinceToggle2.reset();
         timeSinceToggle3.reset();
         timeSinceToggle4.reset();
+        timeSinceToggle5.reset();
     }
 
     @Override
@@ -200,11 +210,11 @@ public class DriverMode extends OpMode {
             timeSinceToggle.reset();
         }
         shooterPID1.setOutputLimits(1);
-        double shooter1Power = shooterPID1.getOutput(shooterMotor1.getVelocity(), -4400);
+        double shooter1Power = shooterPID1.getOutput(shooterMotor1.getVelocity(), -800);
         if (shooterOn) {
             shooterMotor1.setPower(shooter1Power);
             //shooterMotor1.setPower(-1);
-            shooterMotor2.setPower(1);
+            shooterMotor2.setPower(0.2);
         } else {
             shooterMotor1.setPower(0);
             shooterMotor2.setPower(0);
@@ -264,42 +274,78 @@ public class DriverMode extends OpMode {
         currentSlideTicks = linearSlide.getCurrentPosition();
 
         if (isWinchLocked) {
-            winchLock.setPosition(0.56);
-        } else {
             winchLock.setPosition(0.5);
+        } else {
+            winchLock.setPosition(0.46);
         }
+
+        if (gamepad2.dpad_up && timeSinceToggle5.milliseconds() > 300) {
+            isHookLocked = !isHookLocked;
+            timeSinceToggle5.reset();
+        }
+
+        if (isHookLocked) {
+            hookLock.setPosition(0.25);
+        } else {
+            hookLock.setPosition(0.5);
+        }
+
+//        if ((gamepad1.dpad_right || gamepad2.dpad_right) && timeSinceToggle5.milliseconds() > 300) {
+//            isIntakeLocked = !isIntakeLocked;
+//            timeSinceToggle5.reset();
+//        }
+//
+//        if (isIntakeLocked) {
+//            intakeLock.setPosition(0.25);
+//        } else {
+//            intakeLock.setPosition(0.5);
+//        }
 
         if (gamepad2.triangle && currentSlideTicks < slideMaxTicksMax) {
             slideWinchSync = true;
             isWinchLocked = false;
+            isHookLocked = false;
             linearSlide.setPower(1);
         } else if (gamepad2.square && currentSlideTicks < slideMaxTicksMid) {
             slideWinchSync = true;
             isWinchLocked = false;
+            isHookLocked = false;
             linearSlide.setPower(1);
         } else if (gamepad2.circle) {
             slideWinchSync = true;
+            isHookLocked = false;
             linearSlide.setPower(-0.3);
-        } else {
+        } else if (Math.abs(currentWinchTicks - winch.getTargetPosition()) < 100) {
             slideWinchSync = false;
         }
 
         if (slideWinchSync) {
             if (currentSlideTicks < 500) {
-                slideWinchConversion = 6;
-            } else if (currentSlideTicks < 1000 && currentSlideTicks > 500) {
-                slideWinchConversion = 6.3;
+                slideWinchConversion = 5.7;
+            } else if (currentSlideTicks < 700 && currentSlideTicks > 500) {
+                slideWinchConversion = 5.9;
+            } else if (currentSlideTicks < 1000 && currentSlideTicks > 700) {
+                slideWinchConversion = 6.1;
             } else if (currentSlideTicks > 1000 && currentSlideTicks < 1800) {
-                slideWinchConversion = 7.4;
+                slideWinchConversion = 6.5;
             } else if (currentSlideTicks > 1800) {
-                slideWinchConversion = 7.2;
+                slideWinchConversion = 7;
             }
-            winch.setTargetPosition(-(int) slideWinchConversion * currentSlideTicks);
+            winch.setTargetPosition(-(int) (slideWinchConversion * currentSlideTicks));
+            telemetry.addData("calculated", -(int) (slideWinchConversion * currentSlideTicks));
             winch.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             winch.setPower(1);
         }
+        telemetry.addData("Winch Ticks", currentWinchTicks);
+        telemetry.addData("winch target pos", winch.getTargetPosition());
+        telemetry.addData("Slide Ticks", currentSlideTicks);
+
+        telemetry.addData("ratio:", slideWinchConversion);
+        telemetry.addData("actual ratio", String.format("%.2f", (double) currentWinchTicks/(currentSlideTicks + 1)));
+        telemetry.addData("slidewinchsync", slideWinchSync);
 
         if (gamepad2.dpad_down) {
+            isHookLocked = false;
             linearSlide.setPower(-0.6);
         }
 
@@ -317,17 +363,17 @@ public class DriverMode extends OpMode {
             linearSlide.setPower(0.6);
         }
 
-        if (gamepad1.square && currentWinchTicks > -winchMaxTicks) {
+        if (gamepad1.square) { // && currentWinchTicks > -winchMaxTicks
             isWinchLocked = false;
             winch.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
             winch.setPower(-0.3);
             telemetry.addData("unwind", false);
-        } else if (gamepad1.circle && currentWinchTicks < 2000) {
+        } else if (gamepad1.circle) { // && currentWinchTicks < 2000
             isWinchLocked = true;
             winch.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
             winch.setPower(1);
             telemetry.addData("wind", true);
-        } else if (!slideWinchSync) {
+        } else if (!slideWinchSync && !(gamepad2.triangle || gamepad2.square)) {
             winch.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
             winch.setPower(0);
             telemetry.addData("not doing anything", false);
@@ -436,11 +482,10 @@ public class DriverMode extends OpMode {
 //                winch.setPower(0);
 //            }
 //        }
-        telemetry.addData("Winch Ticks", winch.getCurrentPosition());
-        telemetry.addData("Slide Ticks", linearSlide.getCurrentPosition());
+
 //        telemetry.addData("winch lock:", isWinchLocked);
 //        telemetry.addData("sync:", slideWinchSync);
-        telemetry.addData("ratio:", slideWinchConversion);
+
 //        telemetry.addData("left stick 2", gamepad2.left_stick_y);
 //        telemetry.addData("left stick translated", leftStickYTranslated);
 //        telemetry.addData("shooter1", String.format("%.2f", currentShooterRPM1));

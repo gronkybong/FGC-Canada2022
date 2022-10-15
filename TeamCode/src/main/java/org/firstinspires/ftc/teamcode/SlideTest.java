@@ -6,6 +6,7 @@ import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.Range;
 
+@Disabled
 @TeleOp(name="Slide Test", group="Tests")
 
 public class SlideTest extends OpMode{
