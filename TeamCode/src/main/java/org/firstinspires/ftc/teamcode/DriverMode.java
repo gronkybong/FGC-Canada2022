@@ -29,7 +29,7 @@ public class DriverMode extends OpMode {
     private CRServo lowBarRight = null;
     private Servo winchLock = null;
     private Servo hookLock = null;
-    private Servo intakeLock = null;
+    //private Servo intakeLock = null;
     private final ElapsedTime timeSinceToggle = new ElapsedTime();
     private final ElapsedTime timeSinceToggle2 = new ElapsedTime();
     private final ElapsedTime timeSinceToggle3 = new ElapsedTime();
@@ -46,8 +46,9 @@ public class DriverMode extends OpMode {
     boolean slideWinchSync = true;
     boolean isWinchLocked = false;
     boolean isHookLocked = true;
-    boolean isIntakeLocked = true;
+    //boolean isIntakeLocked = true;
     boolean slideAuto = false;
+    boolean firstExtension = true;
     private double lastError = 0;
 
     private final int winchMaxTicks = 12350;
@@ -103,8 +104,8 @@ public class DriverMode extends OpMode {
         winchLock.setPosition(0.5);
         hookLock = hardwareMap.get(Servo.class, "HookLock");
         hookLock.setPosition(0.3);
-        intakeLock = hardwareMap.get(Servo.class, "IntakeLock");
-        intakeLock.setPosition(0.5);
+//        intakeLock = hardwareMap.get(Servo.class, "IntakeLock");
+//        intakeLock.setPosition(0.5);
 
         //direction
         shooterMotor1.setDirection(DcMotor.Direction.REVERSE);
@@ -290,16 +291,16 @@ public class DriverMode extends OpMode {
             hookLock.setPosition(0.5);
         }
 
-        if ((gamepad1.dpad_right || gamepad2.dpad_right) && timeSinceToggle5.milliseconds() > 300) {
-            isIntakeLocked = !isIntakeLocked;
-            timeSinceToggle5.reset();
-        }
-
-        if (isIntakeLocked) {
-            intakeLock.setPosition(0.25);
-        } else {
-            intakeLock.setPosition(0.5);
-        }
+//        if ((gamepad1.dpad_right || gamepad2.dpad_right) && timeSinceToggle5.milliseconds() > 300) {
+//            isIntakeLocked = !isIntakeLocked;
+//            timeSinceToggle5.reset();
+//        }
+//
+//        if (isIntakeLocked) {
+//            intakeLock.setPosition(0.25);
+//        } else {
+//            intakeLock.setPosition(0.5);
+//        }
 
         if (gamepad2.triangle && currentSlideTicks < slideMaxTicksMax) {
             slideWinchSync = true;
@@ -369,7 +370,7 @@ public class DriverMode extends OpMode {
             winch.setPower(-0.3);
             telemetry.addData("unwind", false);
         } else if (gamepad1.circle) { // && currentWinchTicks < 2000
-            isWinchLocked = true;
+            //isWinchLocked = true;
             winch.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
             winch.setPower(1);
             telemetry.addData("wind", true);
@@ -377,6 +378,14 @@ public class DriverMode extends OpMode {
             winch.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
             winch.setPower(0);
             telemetry.addData("not doing anything", false);
+        }
+
+        if (currentWinchTicks < -8000 && firstExtension) {
+            firstExtension = false;
+        }
+
+        if (currentWinchTicks > -5000 && !isWinchLocked && !firstExtension) {
+            isWinchLocked = true;
         }
 
         if (gamepad1.triangle) {
